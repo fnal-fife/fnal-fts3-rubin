@@ -4,3 +4,4 @@
 !files/
 !docker-entrypoint.sh
 !supervisord.conf
+!cluster-hostname-aliasing.py

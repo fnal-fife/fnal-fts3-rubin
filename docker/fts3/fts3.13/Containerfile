@@ -95,5 +95,6 @@ WORKDIR /var/log/supervisor
 #> Set the entrypoint to the provided supervisord starter
 COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
 COPY supervisord.conf /etc/supervisord.conf
+COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
 RUN chmod +x /tmp/docker-entrypoint.sh
 ENTRYPOINT ["/tmp/docker-entrypoint.sh"]

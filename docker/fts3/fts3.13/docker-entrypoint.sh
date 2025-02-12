@@ -45,8 +45,12 @@ if [[ -z "${WEB_INTERFACE}" ]]; then
    rm /etc/httpd/conf.d/ftsmon.conf
 else
    echo ">> Set FTS3 Aliases <<"
-   echo "${HOSTNAME} ${WEB_INTERFACE}" > /etc/fts3/host_aliases
+   python3 /opt/fts3/cluster-hostname-aliasing.py
+   #echo "${HOSTNAME} ${WEB_INTERFACE}" > /etc/fts3/host_aliases
 fi
+
+# Remove TLSv1.3 support from monitoring server config : See https://its.cern.ch/jira/browse/FTS-2037 for more information
+sed -i -e 's^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.3^g' /etc/httpd/conf.d/ftsmon.conf
 
 # Add a ServerName to the HTTPD configuration
 echo ">> Creating /etc/httpd/conf.d/fqdn.conf <<"
