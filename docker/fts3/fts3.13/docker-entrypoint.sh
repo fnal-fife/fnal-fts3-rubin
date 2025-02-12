@@ -29,6 +29,8 @@ envsubst < /opt/fts3/fts3-configs/fts-msg-monitoring.conf > /etc/fts3/fts-msg-mo
 
 chown root:apache /etc/fts3web/fts3web.ini
 chown -R fts3:fts3 /var/log/fts3rest
+chown -R fts3:fts3 /var/log/fts3
+chown -R fts3:fts3 /var/log/fts3web
 
 
 if [[ ! -z "${DATABASE_UPGRADE}" ]]; then
