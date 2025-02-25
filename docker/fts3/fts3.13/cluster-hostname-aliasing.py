@@ -1,14 +1,15 @@
 import os
 import sqlalchemy
 from sqlalchemy import create_engine, text
+from urllib.parse import quote_plus
 
 def connect_and_query_mariadb(db_user, db_password, db_host, db_name, output_file="/etc/fts3/host_aliases"):
     """Connects to MariaDB, executes a query, and writes results to a file."""
-    db_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}/{db_name}"
-    print("connected")
+    db_url = f"mysql+pymysql://{db_user}:%s@{db_host}/{db_name}" % quote_plus(db_password)
     engine = create_engine(db_url)
     try:
         with engine.connect() as connection:
+            print("connected")
             query = text("SELECT DISTINCT transfer_host FROM t_file")
             result = connection.execute(query)
             found_current_host = False
