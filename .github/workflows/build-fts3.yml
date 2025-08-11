@@ -3,6 +3,8 @@ run-name: ${{ github.actor }}
 on:
   workflow_dispatch:
   push:
+    branch:
+     - "test-build-fts3"
     tags:
      - "*"
 
