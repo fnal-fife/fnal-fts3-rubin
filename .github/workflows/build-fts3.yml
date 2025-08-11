@@ -18,12 +18,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Build fts3 image
         uses: lsst-sqre/build-and-push-to-ghcr@v1
         id: build
         with:
-          image: fnal-fife/fts3
+          image: fnal-fife/fnal-fts3-rubin
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dockerfile: docker/Containerfile
           context: docker/.
