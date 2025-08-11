@@ -1,0 +1,29 @@
+name: Build fnal-fts3
+run-name: ${{ github.actor }}
+on:
+  push:
+    tags:
+     - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Build fts3 image
+        uses: lsst-sqre/build-and-push-to-ghcr@v1
+        id: build
+        with:
+          image: fnal-fife/fts3
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: docker/Containerfile
+          context: docker/.
+          push: true
+          platforms: linux/amd64
+          additional-tags: 'alma9-${{ github.event.ref }}'
