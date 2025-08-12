@@ -25,7 +25,7 @@ chown root:root /etc/pki/tls/private/localhost.key
 # Process configs using envsubst to keep configs public
 envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
 envsubst < /opt/fts3/fts3-configs/fts3restconfig > /etc/fts3/fts3restconfig
-envsubst < /opt/fts3/fts3-configs/fts-msg-monitoring.conf > /etc/fts3/fts-msg-monitoring.conf
+envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.conf
 
 chown root:apache /etc/fts3web/fts3web.ini
 chown -R fts3:fts3 /var/log/fts3rest
