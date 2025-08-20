@@ -1,7 +1,0 @@
-# Ignore everything but the Containerfile and /files.
-*
-!Containerfile
-!files/
-!docker-entrypoint.sh
-!supervisord.conf
-!cluster-hostname-aliasing.py
