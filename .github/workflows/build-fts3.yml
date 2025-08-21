@@ -30,8 +30,8 @@ jobs:
         with:
           image: fnal-fife/fnal-fts3-rubin
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          dockerfile: docker/Containerfile
-          context: docker/.
+          dockerfile: docker/fts3/Containerfile
+          context: docker/fts3/.
           push: true
           platforms: linux/amd64
-          additional-tags: 'alma9-${{ github.event.ref }}'
+          additional-tags: '${{ github.event.ref }}'
