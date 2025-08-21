@@ -34,4 +34,4 @@ jobs:
           context: docker/fts3/.
           push: true
           platforms: linux/amd64
-          additional-tags: '${{ github.event.ref }}'
+          additional-tags: '${{ github.event.sha }}'
