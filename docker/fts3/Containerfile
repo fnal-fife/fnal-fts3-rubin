@@ -49,11 +49,9 @@ RUN dnf -y install mariadb && \
 #> Ports for FTS3, 8446 for REST, 8449 for monitoring
 EXPOSE 8446 8449
 
-
 #> Clean up
 RUN dnf clean all && \
     rm -rf /var/cache/dnf
-
 
 #> Grant group write access
 RUN chmod -R 775 /etc/grid-security \
@@ -104,5 +102,10 @@ WORKDIR /var/log/supervisor
 COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
 COPY supervisord.conf /etc/supervisord.conf
 COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
+
+#> Add lancaster vomses
+COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
+RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
+
 RUN chmod +x /tmp/docker-entrypoint.sh
 ENTRYPOINT ["/tmp/docker-entrypoint.sh"]
