@@ -1,0 +1,34 @@
+name: Build fetch-crl-cron
+run-name: ${{ github.ref_name }}
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build fetch-crl-cron image
+        uses: lsst-sqre/build-and-push-to-ghcr@v1
+        id: build
+        with:
+          image: fnal-fife/fetch-crl-cron
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: docker/fetch-crl/Containerfile
+          context: docker/fetch-crl/.
+          push: true
+          platforms: linux/amd64
+          additional-tags: |
+            ${{ github.event.sha }}
+            latest
