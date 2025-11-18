@@ -6,7 +6,7 @@ LABEL description="Container to update CRLs and certificates"
 
 # Installing EPEL and OSG repositories
 RUN sed -i '1,/enabled=0/ s/enabled=0/enabled=1/' /etc/yum.repos.d/almalinux-crb.repo 
-RUN dnf install -y https://repo.osg-htc.org/osg/24-main/osg-24-main-el9-release-latest.rpm
+RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm
 RUN dnf install -y epel-release
 RUN dnf update -y
 

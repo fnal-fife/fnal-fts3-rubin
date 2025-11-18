@@ -21,7 +21,7 @@ RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-depend.re
 RUN dnf clean all
 
 #> Install the FTS packages and dependencies
-RUN dnf install -y https://repo.opensciencegrid.org/osg/3.6/osg-3.6-el9-release-latest.rpm \ 
+RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm \ 
     gfal2-plugin-mock gfal2-all \
     gettext cronie crontabs supervisor fetch-crl
 
