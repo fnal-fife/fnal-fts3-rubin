@@ -1,7 +1,6 @@
 #> Docker image build arguments:
 FROM almalinux:9.4
-# ARG VERSION=3.13.0-1.el9
-ARG VERSION=3.14.2
+ARG VERSION=3.14.4
 
 LABEL fts-version=${VERSION}
 
@@ -27,14 +26,14 @@ RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-
 
 #> Install FTS
 RUN dnf install -y \
-    fts-server-${VERSION} \
-    fts-rest-server-${VERSION} \
-    fts-monitoring-${VERSION} \
-    fts-mysql-${VERSION} \
-    fts-server-selinux-${VERSION} \
-    fts-rest-server-selinux-${VERSION} \
-    fts-monitoring-selinux-${VERSION} \
-    fts-activemq-${VERSION} \
+    fts-server-3.14.4 \
+    fts-server-selinux-3.14.4 \
+    fts-rest-server-3.14.2 \
+    fts-rest-server-selinux-3.14.2 \
+    fts-monitoring-3.14.2 \
+    fts-monitoring-selinux-3.14.2 \
+    fts-mysql-3.14.4 \
+    fts-activemq-3.14.4 \
     vo-client && \
     dnf clean all
 
