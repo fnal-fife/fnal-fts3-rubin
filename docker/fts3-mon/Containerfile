@@ -1,6 +1,5 @@
 #> Docker image build arguments:
 FROM almalinux:9.4
-# ARG VERSION=3.13.0-1.el9
 ARG VERSION=3.14.2
 
 LABEL fts-version=${VERSION}
@@ -20,24 +19,19 @@ RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo
 RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo
 RUN dnf clean all
 
-#> Install the FTS packages and dependencies
-RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm \ 
-    gfal2-plugin-mock gfal2-all \
-    gettext cronie crontabs supervisor fetch-crl
+#> Install the osg repos
+RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm && \
+    dnf clean all
 
 #> Install FTS
 RUN dnf install -y \
     fts-monitoring-${VERSION} \
     fts-monitoring-selinux-${VERSION} \
-    vo-client && \
-    dnf clean all
-
-#> Install utils
-RUN dnf install -y procps which && \
-    dnf clean all
-
-#> Install MariaDB
-RUN dnf -y install mariadb && \
+    fts-mysql-3.14.2 \
+    python3-sqlalchemy \
+    procps which \
+    gettext vo-client \
+    mariadb && \
     dnf clean all
 
 #> Ports for FTS3, 8449 for monitoring
@@ -52,7 +46,6 @@ RUN chmod -R 775 /etc/grid-security \
     /etc/httpd /run/httpd /var/log/httpd \
     /usr/share/fts3web
 
-
 #> Grant group read access
 RUN chmod 664 /etc/fts3/*
 RUN chmod 775 /run /etc/fts3
@@ -61,44 +54,16 @@ RUN chmod g=u /etc/passwd
 #> Change group from apache to root
 RUN chgrp -R root /run/httpd /etc/fts3web
 
-#> Don't listen on privileged ports
-RUN sed -i 's/Listen 80/#Listen 80/' /etc/httpd/conf/httpd.conf
-RUN sed -i 's/Listen 443/#Listen 443/' /etc/httpd/conf.d/ssl.conf
-
-#> Remove TRACE and TRACK HTTP methods (403: Not Allowed)
-RUN echo "" >> /etc/httpd/conf/httpd.conf
-RUN echo "# Remove TRACE/TRACK HTTP Methods" >> /etc/httpd/conf/httpd.conf
-RUN echo "TraceEnable Off"  >> /etc/httpd/conf/httpd.conf
-RUN echo "RewriteEngine On" >> /etc/httpd/conf/httpd.conf
-RUN echo "RewriteOptions InheritDown" >> /etc/httpd/conf/httpd.conf
-RUN echo "RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK)" >> /etc/httpd/conf/httpd.conf
-RUN echo "RewriteRule .* - [F]" >> /etc/httpd/conf/httpd.conf
-
-#> Always append SAMEORIGIN
-RUN echo "" >> /etc/httpd/conf/httpd.conf
-RUN echo "# Always append SAMEORIGIN" >> /etc/httpd/conf/httpd.conf
-RUN echo "Header always append X-Frame-Options SAMEORIGIN" >> /etc/httpd/conf/httpd.conf
-
-#> Hide Apache version and OS version
-RUN echo "" >> /etc/httpd/conf/httpd.conf
-RUN echo "# Hide Apache version and OS Version" >> /etc/httpd/conf/httpd.conf
-RUN echo "ServerTokens Prod" >> /etc/httpd/conf/httpd.conf
-RUN echo "ServerSignature Off" >> /etc/httpd/conf/httpd.conf
-
 #> Needed for pure k8s environment
-RUN chown fts3:root /var/log/fts3rest && chmod 644 /etc/fts3web/fts3web.ini
+RUN chown fts3:root /var/log/fts3web && chmod 644 /etc/fts3web/fts3web.ini
 
-#> Supervisord writes logs to cwd
-WORKDIR /var/log/supervisor
-
-#> Set the entrypoint to the provided supervisord starter
 COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
-COPY supervisord.conf /etc/supervisord.conf
 COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
+COPY files/httpd.conf /etc/httpd/conf/httpd.conf
 
 #> Add lancaster vomses
-COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
-RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
+#COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
+#RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
 
 RUN chmod +x /tmp/docker-entrypoint.sh
 ENTRYPOINT ["/tmp/docker-entrypoint.sh"]

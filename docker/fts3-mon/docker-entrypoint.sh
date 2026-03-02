@@ -24,32 +24,14 @@ chown root:root /etc/pki/tls/private/localhost.key
 
 # Process configs using envsubst to keep configs public
 envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
-envsubst < /opt/fts3/fts3-configs/fts3restconfig > /etc/fts3/fts3restconfig
+#envsubst < /opt/fts3/fts3-configs/fts3restconfig > /etc/fts3/fts3restconfig
 envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.conf
 
 chown root:apache /etc/fts3web/fts3web.ini
-chown -R fts3:fts3 /var/log/fts3rest
-chown -R fts3:fts3 /var/log/fts3
-chown -R fts3:fts3 /var/log/fts3web
+chown -R fts3:apache /var/log/fts3web
 
-
-if [[ ! -z "${DATABASE_UPGRADE}" ]]; then
-   echo ">> Database Upgrade <<"
-   yes Y | python /usr/share/fts/fts-database-upgrade.py
-fi
-if [[ ! -z "${REST_HOST}" ]]; then
-   echo ">> Replace Host <<"
-   replaceCommand="sed -i -e 's/*/${REST_HOST}/g' /etc/httpd/conf.d/fts3rest.conf"
-   eval $replaceCommand
-fi
-if [[ -z "${WEB_INTERFACE}" ]]; then
-   echo ">> Remove FST Mon <<"
-   rm /etc/httpd/conf.d/ftsmon.conf
-else
-   echo ">> Set FTS3 Aliases <<"
-   python3 /opt/fts3/cluster-hostname-aliasing.py
-   #echo "${HOSTNAME} ${WEB_INTERFACE}" > /etc/fts3/host_aliases
-fi
+ echo ">> Set FTS3 Aliases <<"
+ python3 /opt/fts3/cluster-hostname-aliasing.py
 
 # Remove TLSv1.3 support from monitoring server config : See https://its.cern.ch/jira/browse/FTS-2037 for more information
 sed -i -e 's^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.3^g' /etc/httpd/conf.d/ftsmon.conf
@@ -63,12 +45,6 @@ echo "ServerName localhost" > /etc/httpd/conf.d/fqdn.conf
 # fetch-crl  
 
 echo ">> START httpd <<"                                                      
-httpd
-
-echo ">> EXEC restart_httpd.sh <<"
-echo 'while true; do sleep 3600; &>/dev/null httpd -k graceful; done' > /root/restart_httpd.sh
-chmod +x /root/restart_httpd.sh
-nohup /root/restart_httpd.sh &
-
-echo ">> START supervisord <<"
-supervisord -c /etc/supervisord.conf --nodaemon
+pkill httpd || :
+sleep 2
+exec httpd -D FOREGROUND
