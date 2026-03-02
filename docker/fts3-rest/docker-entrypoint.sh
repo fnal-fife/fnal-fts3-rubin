@@ -23,29 +23,17 @@ chown root:root /etc/grid-security/hostkey.pem
 chown root:root /etc/pki/tls/private/localhost.key
 
 # Process configs using envsubst to keep configs public
-#envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
+envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
 envsubst < /opt/fts3/fts3-configs/fts3restconfig > /etc/fts3/fts3restconfig
 #envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.conf
 
-chown -R fts3:fts3 /var/log/fts3rest
+chown -R fts3:apache /var/log/fts3rest
 
 
-if [[ ! -z "${DATABASE_UPGRADE}" ]]; then
-   echo ">> Database Upgrade <<"
-   yes Y | python /usr/share/fts/fts-database-upgrade.py
-fi
 if [[ ! -z "${REST_HOST}" ]]; then
    echo ">> Replace Host <<"
    replaceCommand="sed -i -e 's/*/${REST_HOST}/g' /etc/httpd/conf.d/fts3rest.conf"
    eval $replaceCommand
-fi
-if [[ -z "${WEB_INTERFACE}" ]]; then
-   echo ">> Remove FTS Mon <<"
-   rm /etc/httpd/conf.d/ftsmon.conf
-else
-   echo ">> Set FTS3 Aliases <<"
-   python3 /opt/fts3/cluster-hostname-aliasing.py
-   #echo "${HOSTNAME} ${WEB_INTERFACE}" > /etc/fts3/host_aliases
 fi
 
 # Add a ServerName to the HTTPD configuration
