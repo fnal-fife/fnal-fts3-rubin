@@ -1,7 +1,8 @@
 #> Docker image build arguments:
 FROM almalinux:9.4
-# ARG VERSION=3.13.0-1.el9
-ARG VERSION=3.14.4
+
+ARG VERSION=3.14.2
+ARG S6_OVERLAY_VERSION=3.2.2.0
 
 LABEL fts-version=${VERSION}
 
@@ -15,52 +16,57 @@ RUN dnf update -y && \
     dnf clean all
 
 #> Add supported Alma9 repos
-# RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-rc-el9.repo
 ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo /etc/yum.repos.d 
 ADD http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo /etc/yum.repos.d
 
 # Install OSG Repo
 RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm 
 
+#> Install the FTS packages and dependencies
+#> Install FTS
+#> Install utils
 RUN dnf install -y \
-    #> Install the FTS packages and dependencies
     gfal2-plugin-mock gfal2-all \
-    gettext cronie crontabs supervisor fetch-crl \
-    #> Install FTS
+    gettext cronie crontabs fetch-crl \
     fts-server-${VERSION} \
     fts-mysql-${VERSION} \
     fts-server-selinux-${VERSION} \
     fts-activemq-${VERSION} \
     vo-client \
-    #> Install utils
     procps which \
     # Install mariadb
     mariadb && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
+#> Install s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 #> Grant group write access
 RUN chmod -R 775 /etc/grid-security \
     /etc/httpd /run/httpd /var/log/httpd \
     /var/lib/fts3 /var/log/fts3 /var/lib/fts3
-
 
 #> Grant group read access
 RUN chmod 664 /etc/fts3/*
 RUN chmod 775 /run /etc/fts3
 RUN chmod g=u /etc/passwd
 
-#> Supervisord writes logs to cwd
-WORKDIR /var/log/supervisor
-
-#> Set the entrypoint to the provided supervisord starter
-COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
-COPY supervisord.conf /etc/supervisord.conf
-COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
-
 #> Add lancaster vomses
 COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
 RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
 
-RUN chmod +x /tmp/docker-entrypoint.sh
-ENTRYPOINT ["/tmp/docker-entrypoint.sh"]
+#> Add setup script
+COPY setup.sh /tmp/setup.sh
+RUN chmod +x /tmp/setup.sh
+
+COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
+COPY s6-rc.d/ /etc/s6-overlay/s6-rc.d
+
+#> Ensure all run scripts are executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/up
+
+ENTRYPOINT ["/init"]

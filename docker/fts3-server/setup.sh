@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
 if ! whoami &> /dev/null; then
   if [ -w /etc/passwd ]; then
@@ -22,7 +22,9 @@ chmod 400 /etc/pki/tls/private/localhost.key
 chown root:root /etc/grid-security/hostkey.pem
 chown root:root /etc/pki/tls/private/localhost.key
 
+set -a
 # Process configs using envsubst to keep configs public
+echo ">> Updating fts3configs <<"
 envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
 envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.conf
 
@@ -33,5 +35,3 @@ if [[ ! -z "${DATABASE_UPGRADE}" ]]; then
    yes Y | python /usr/share/fts/fts-database-upgrade.py
 fi
 
-echo ">> START supervisord <<"
-supervisord -c /etc/supervisord.conf --nodaemon
