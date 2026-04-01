@@ -1,1 +1,1 @@
-docker-buildx build --platform linux/amd64 -t ${1:-localbuild/fts3-alma9:latest} -f Containerfile .
+podman buildx build --platform linux/amd64 -t ${1:-localbuild/fts3-alma9:latest} -f Containerfile .
