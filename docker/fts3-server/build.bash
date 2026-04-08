@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FTS_VERSION=3.14.2
+FTS_VERSION=3.14.4
 
 podman build --platform linux/amd64 \
   --build-arg VERSION=$FTS_VERSION \

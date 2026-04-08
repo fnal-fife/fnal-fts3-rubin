@@ -1,7 +1,7 @@
 #> Docker image build arguments:
 FROM almalinux:9.4
 
-ARG VERSION=3.14.2
+ARG VERSION=3.14.4
 ARG S6_OVERLAY_VERSION=3.2.2.0
 
 LABEL fts-version=${VERSION}
@@ -29,8 +29,8 @@ RUN dnf install -y \
     gfal2-plugin-mock gfal2-all \
     gettext cronie crontabs fetch-crl \
     fts-server-${VERSION} \
-    fts-mysql-${VERSION} \
     fts-server-selinux-${VERSION} \
+    fts-mysql-${VERSION} \
     fts-activemq-${VERSION} \
     vo-client \
     procps which \
