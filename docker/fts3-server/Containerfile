@@ -7,7 +7,7 @@ ARG S6_OVERLAY_VERSION=3.2.2.0
 LABEL fts-version=${VERSION}
 
 #> Enable CRB repo
-COPY files/almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
+COPY almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
 
 #> Update image
 #> Install EL9 dependencies
@@ -54,16 +54,19 @@ RUN chmod 664 /etc/fts3/*
 RUN chmod 775 /run /etc/fts3
 RUN chmod g=u /etc/passwd
 
+#> Copy rootfs to /
+COPY rootfs/ /
+
 #> Add lancaster vomses
-COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
+#COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
 RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
 
 #> Add setup script
-COPY setup.sh /tmp/setup.sh
+#COPY setup.sh /tmp/setup.sh
 RUN chmod +x /tmp/setup.sh
 
-COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
-COPY s6-rc.d/ /etc/s6-overlay/s6-rc.d
+#COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
+#COPY s6-rc.d/ /etc/s6-overlay/s6-rc.d
 
 #> Ensure all run scripts are executable
 RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
