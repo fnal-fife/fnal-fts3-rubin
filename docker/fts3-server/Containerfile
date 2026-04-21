@@ -16,8 +16,9 @@ RUN dnf update -y && \
     dnf clean all
 
 #> Add supported Alma9 repos
-ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo /etc/yum.repos.d 
-ADD http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo /etc/yum.repos.d
+ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo \
+    http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo \
+    /etc/yum.repos.d
 
 # Install OSG Repo
 RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm 
@@ -40,10 +41,14 @@ RUN dnf install -y \
     rm -rf /var/cache/dnf
 
 #> Install s6-overlay
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz \
+    https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz \
+    /tmp
+
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
 RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+RUN rm -rf /tmp/s6-overlay-*.tar.xz
+
 #> Grant group write access
 RUN chmod -R 775 /etc/grid-security \
     /etc/httpd /run/httpd /var/log/httpd \
@@ -71,5 +76,6 @@ RUN chmod +x /tmp/setup.sh
 #> Ensure all run scripts are executable
 RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
 RUN chmod +x /etc/s6-overlay/s6-rc.d/*/up
+RUN chmod 0777 /tmp
 
 ENTRYPOINT ["/init"]
