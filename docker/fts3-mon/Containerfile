@@ -1,0 +1,69 @@
+#> Docker image build arguments:
+FROM almalinux:9.4
+ARG VERSION=3.14.2
+
+LABEL fts-version=${VERSION}
+
+#> Enable CRB repo
+COPY files/almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
+
+#> Update image
+#> Install EL9 dependencies
+RUN dnf update -y && \
+    dnf install -y epel-release wget && \
+    dnf clean all
+
+#> Add supported Alma9 repos
+# RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-rc-el9.repo
+RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo
+RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo
+RUN dnf clean all
+
+#> Install the osg repos
+RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm && \
+    dnf clean all
+
+#> Install FTS
+RUN dnf install -y \
+    fts-monitoring-${VERSION} \
+    fts-monitoring-selinux-${VERSION} \
+    fts-mysql-3.14.2 \
+    python3-sqlalchemy \
+    procps which \
+    gettext vo-client \
+    mariadb && \
+    dnf clean all
+
+#> Ports for FTS3, 8449 for monitoring
+EXPOSE 8449
+
+#> Clean up
+RUN dnf clean all && \
+    rm -rf /var/cache/dnf
+
+#> Grant group write access
+RUN chmod -R 775 /etc/grid-security \
+    /etc/httpd /run/httpd /var/log/httpd \
+    /usr/share/fts3web
+
+#> Grant group read access
+RUN chmod 664 /etc/fts3/*
+RUN chmod 775 /run /etc/fts3
+RUN chmod g=u /etc/passwd
+
+#> Change group from apache to root
+RUN chgrp -R root /run/httpd /etc/fts3web
+
+#> Needed for pure k8s environment
+RUN chown fts3:root /var/log/fts3web && chmod 644 /etc/fts3web/fts3web.ini
+
+COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
+COPY cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
+COPY files/httpd.conf /etc/httpd/conf/httpd.conf
+
+#> Add lancaster vomses
+#COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
+#RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
+
+RUN chmod +x /tmp/docker-entrypoint.sh
+ENTRYPOINT ["/tmp/docker-entrypoint.sh"]
