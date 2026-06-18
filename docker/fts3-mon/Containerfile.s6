@@ -1,0 +1,46 @@
+#> Docker image build arguments:
+# TODO: use almalinux image and install fts-monitoring direclty
+#FROM almalinux:9.4
+FROM ghcr.io/fnal-fife/fts3-mon:3.14.2
+ARG VERSION=3.14.2
+
+ARG S6_OVERLAY_VERSION=3.2.2.0
+
+LABEL fts-version=${VERSION}-s6
+
+#> Install cron
+RUN dnf update -y && \
+    dnf install -y cronie && \
+    dnf clean all
+
+#> Install s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz \
+    https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz \
+    /tmp
+
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+RUN rm -rf /tmp/s6-overlay-*.tar.xz
+
+#> Ports for FTS3, 8449 for monitoring
+EXPOSE 8449
+
+#> Clean up
+RUN dnf clean all && \
+    rm -rf /var/cache/dnf
+
+#> Clear up cronie anacron job
+RUN rm -f /etc/cron.d/0hourly /etc/cron.hourly/0anacron
+
+#> Copy configuration rootfs
+COPY rootfs/ /
+
+#> Ensure all run scripts are executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/up
+RUN chmod 0777 /tmp
+
+#> setup script permissions
+RUN chmod +x /tmp/setup.sh
+
+ENTRYPOINT ["/init"]
