@@ -1,0 +1,2 @@
+# min hr dom mon dow user  command
+0 0,12 * * * root /command/s6-svc -1 /run/service/httpd >/dev/null 2>&1

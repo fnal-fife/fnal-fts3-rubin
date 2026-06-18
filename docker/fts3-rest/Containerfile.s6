@@ -2,11 +2,12 @@
 FROM almalinux:9.8
 ARG VERSION=3.14.2
 
-LABEL fts-version=${VERSION}
+ARG S6_OVERLAY_VERSION=3.2.2.0
+
+LABEL fts-version=${VERSION}-s6
 
 #> Enable CRB repo
-#COPY almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
-RUN dnf config-manager --set-enabled crb
+COPY almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
 
 #> Update image
 #> Install EL9 dependencies
@@ -30,9 +31,19 @@ RUN dnf install -y \
     fts-rest-server-selinux-3.14.2 \
     fts-mysql-3.14.2 \
     procps which \
+    cronie \
     gettext vo-client \
     mariadb && \
     dnf clean all
+
+#> Install s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz \
+    https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz \
+    /tmp
+
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+RUN rm -rf /tmp/s6-overlay-*.tar.xz
 
 #> Ports for FTS3, 8446 for REST
 EXPOSE 8446
@@ -51,17 +62,24 @@ RUN chmod 664 /etc/fts3/*
 RUN chmod 775 /run /etc/fts3
 RUN chmod g=u /etc/passwd
 
+#> Clear up cronie anacron job
+RUN rm -f /etc/cron.d/0hourly /etc/cron.hourly/0anacron
+
+#> Copy configuration rootfs
+COPY rootfs/ /
 
 #> Needed for pure k8s environment
 RUN chown fts3:root /var/log/fts3rest
 
-COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
-COPY rootfs/opt/fts3/cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
-COPY rootfs/etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf
+#COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
+#COPY files/httpd.conf /etc/httpd/conf/httpd.conf
 
-#> Add lancaster vomses
-#COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
-#RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
+#> Ensure all run scripts are executable
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/*/up
+RUN chmod 0777 /tmp
 
-RUN chmod +x /tmp/docker-entrypoint.sh
-ENTRYPOINT ["/tmp/docker-entrypoint.sh"]
+#> setup script permissions
+RUN chmod +x /tmp/setup.sh
+
+ENTRYPOINT ["/init"]
