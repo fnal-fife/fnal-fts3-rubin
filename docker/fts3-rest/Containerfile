@@ -2,66 +2,92 @@
 FROM almalinux:9.8
 ARG VERSION=3.14.2
 
-LABEL fts-version=${VERSION}
+ARG S6_OVERLAY_VERSION=3.2.2.0
 
-#> Enable CRB repo
-#COPY almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
-RUN dnf config-manager --set-enabled crb
+LABEL fts-version=${VERSION}-s6 \
+      description="FTS3 Rest Container" \
+      maintainer="Dennis Lee <dylee@fnal.gov>" \
+      fts_rest_version="${VERSION}" \
+      fts_mysql_version="${VERSION}"
+
+#> Add supported Alma9 repos
+ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo \
+    http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo \
+#    almalinux-crb.repo \
+    /etc/yum.repos.d
 
 #> Update image
 #> Install EL9 dependencies
-RUN dnf update -y && \
-    dnf install -y epel-release wget && \
-    dnf clean all
-
-#> Add supported Alma9 repos
-# RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-rc-el9.repo
-RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo
-RUN wget -P /etc/yum.repos.d http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo
-RUN dnf clean all
-
-#> Install the osg repos
-RUN dnf install -y https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm && \
-    dnf clean all
+RUN <<EOF
+dnf update -y
+dnf install -y epel-release \
+  https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm
+dnf clean all
+rm -rf /var/cache/dnf
+EOF
 
 #> Install FTS and other utils
-RUN dnf install -y \
-    fts-rest-server-3.14.2 \
-    fts-rest-server-selinux-3.14.2 \
-    fts-mysql-3.14.2 \
-    procps which \
-    gettext vo-client \
-    mariadb && \
-    dnf clean all
+RUN <<EOF
+dnf install -y \
+  fts-rest-server-3.14.2 \
+  fts-rest-server-selinux-3.14.2 \
+  fts-mysql-3.14.2 \
+  procps which \
+  cronie \
+  gettext vo-client \
+  mariadb
+dnf clean all
+rm -rf /var/cache/dnf
+
+#> Clear up cronie anacron job
+rm -f /etc/cron.d/0hourly \
+  /etc/cron.hourly/0anacron
+
+groupmod -g 2000 fts3 2>/dev/null || true
+usermod -u 1000 -g 2000 fts3 2>/dev/null || true
+
+EOF
+
+WORKDIR /tmp
+
+#> Install s6-overlay
+RUN <<EOF
+curl -LO https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz
+curl -LO https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz
+tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz
+tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+rm -rf /tmp/s6-overlay-*.tar.xz
+EOF
 
 #> Ports for FTS3, 8446 for REST
 EXPOSE 8446
 
-#> Clean up
-RUN dnf clean all && \
-    rm -rf /var/cache/dnf
+#> Copy configuration rootfs
+COPY rootfs/ /
 
+#> Grant group read and write
+RUN <<EOF
 #> Grant group write access
-RUN chmod -R 775 /etc/grid-security \
-    /etc/httpd /run/httpd /var/log/httpd \
-    /var/log/fts3rest
+chmod -R 775 /etc/grid-security \
+  /etc/httpd /run/httpd /var/log/httpd \
+  /var/log/fts3rest
 
 #> Grant group read access
-RUN chmod 664 /etc/fts3/*
-RUN chmod 775 /run /etc/fts3
-RUN chmod g=u /etc/passwd
-
+chmod 664 /etc/fts3/*
+chmod 775 /run /etc/fts3
+chmod g=u /etc/passwd
 
 #> Needed for pure k8s environment
-RUN chown fts3:root /var/log/fts3rest
+chown fts3:root /var/log/fts3rest
 
-COPY docker-entrypoint.sh /tmp/docker-entrypoint.sh
-COPY rootfs/opt/fts3/cluster-hostname-aliasing.py /opt/fts3/cluster-hostname-aliasing.py
-COPY rootfs/etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf
+#> Ensure all run scripts are executable
+chmod +x /etc/s6-overlay/s6-rc.d/*/run
+chmod +x /etc/s6-overlay/s6-rc.d/*/up
+chmod 0777 /tmp
 
-#> Add lancaster vomses
-#COPY files/voms.hec.lancs.ac.uk.lsc /etc/grid-security/vomsdir/lsst/voms.hec.lancs.ac.uk.lsc
-#RUN echo '"lsst" "voms.hec.lancs.ac.uk" "15003" "/C=UK/O=eScience/OU=Lancaster/L=Physics/CN=voms.hec.lancs.ac.uk" "lsst"' >> /etc/vomses
+chmod +x /tmp/setup.sh
+EOF
 
-RUN chmod +x /tmp/docker-entrypoint.sh
-ENTRYPOINT ["/tmp/docker-entrypoint.sh"]
+WORKDIR /
+
+ENTRYPOINT ["/init"]
