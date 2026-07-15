@@ -41,6 +41,11 @@ procps which \
 mariadb
 dnf clean all
 rm -rf /var/cache/dnf
+
+#> Set fts3 gid, uid
+groupmod -g 2000 fts3 2>/dev/null || true
+usermod -u 1000 -g 2000 fts3 2>/dev/null || true
+
 EOF
 
 WORKDIR /tmp
