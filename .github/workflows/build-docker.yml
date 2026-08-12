@@ -19,12 +19,9 @@ jobs:
 
     steps:
       - name: Checkout tag commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag_override || github.event.release.tag_name || github.ref_name }}
-
-      - name: Parse and Set Environment Variables
-        run: |
 
       - name: Determine configuration from tag
         id: set-env
