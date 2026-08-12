@@ -1,10 +1,15 @@
 #> Docker image build arguments:
 FROM almalinux:9.8
 
-ARG VERSION=3.14.4
+ARG IMAGE_VERSION=dev
 ARG S6_OVERLAY_VERSION=3.2.2.0
 
-LABEL fts-version=${VERSION}
+LABEL fts-version=3.14.4 \
+      image-version=${IMAGE_VERSION} \
+      description="FTS3 Monitoring Container" \
+      maintainer="Dennis Lee <dylee@fnal.gov>" \
+      fts_serveer_version="3.14.4" \
+      fts_mysql_version="3.14.4"
 
 #> Enable CRB repo
 COPY almalinux-crb.repo /etc/yum.repos.d/almalinux-crb.repo
@@ -32,10 +37,9 @@ RUN <<EOF
 dnf install -y \
 gfal2-plugin-mock gfal2-all \
 gettext cronie crontabs fetch-crl \
-fts-server-${VERSION} \
-fts-server-selinux-${VERSION} \
-fts-mysql-${VERSION} \
-fts-activemq-${VERSION} \
+fts-server-3.14.4 \
+fts-server-selinux-3.14.4 \
+fts-mysql-3.14.4 \
 vo-client \
 procps which \
 mariadb

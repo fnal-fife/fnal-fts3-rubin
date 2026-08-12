@@ -1,14 +1,15 @@
 #> Docker image build arguments:
 FROM almalinux:9.8
-ARG VERSION=3.14.2
 
+ARG IMAGE_VERSION=dev
 ARG S6_OVERLAY_VERSION=3.2.2.0
 
-LABEL fts-version=${VERSION}-s6 \
+LABEL fts-version="3.14.2" \
+      image-version="${IMAGE_VERSION}" \
       description="FTS3 Rest Container" \
       maintainer="Dennis Lee <dylee@fnal.gov>" \
-      fts_rest_version="${VERSION}" \
-      fts_mysql_version="${VERSION}"
+      fts_rest_version="3.14.2" \
+      fts_mysql_version="3.14.2"
 
 #> Add supported Alma9 repos
 ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo \

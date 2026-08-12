@@ -18,15 +18,16 @@ RUN rpmbuild -bb /tmp/django-provide.spec --define "_rpmdir /tmp/dummy-repo" \
 
 # Main image
 FROM almalinux:9.8
-ARG VERSION=3.14.2
 
+ARG IMAGE_VERSION=dev
 ARG S6_OVERLAY_VERSION=3.2.2.0
 
-LABEL fts-version=${VERSION}-s6 \
+LABEL fts-version="3.14.2" \
+      image-version="${IMAGE_VERSION}" \
       description="FTS3 Monitoring Container" \
       maintainer="Dennis Lee <dylee@fnal.gov>" \
-      fts_monitoring_version="${VERSION}" \
-      fts_mysql_version="${VERSION}"
+      fts_monitoring_version="3.14.2" \
+      fts_mysql_version="3.14.2"
 
 #> Add supported Alma9 repos
 ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo \
@@ -51,8 +52,8 @@ RUN <<EOF
 dnf install -y \
   python3-django4.2 \
   /tmp/django-provide-1.0-1.el9.x86_64.rpm \
-  fts-monitoring-${VERSION} \
-  fts-monitoring-selinux-${VERSION} \
+  fts-monitoring-3.14.2 \
+  fts-monitoring-selinux-3.14.2 \
   fts-mysql-3.14.2 \
   python3-sqlalchemy \
   procps which \
