@@ -23,6 +23,9 @@ jobs:
         with:
           ref: ${{ inputs.tag_override || github.event.release.tag_name || github.ref_name }}
 
+      - name: Parse and Set Environment Variables
+        run: |
+
       - name: Determine configuration from tag
         id: set-env
         run: |
@@ -34,18 +37,18 @@ jobs:
               DOCKERFILE_PATH="docker/fts3-server/Containerfile"
               BUILD_CONTEXT="docker/fts3-server"
               ;;
-            rest-v*)
-              IMAGE_NAME="${{ github.repository_owner }}/rest"
+            rest-*)
+              IMAGE_NAME="${{ github.repository_owner }}/fts3-rest"
               DOCKERFILE_PATH="docker/fts3-rest/Containerfile"
               BUILD_CONTEXT="docker/fts3-rest"
               ;;
             monitoring-*)
-              IMAGE_NAME="${{ github.repository_owner }}/monitoring"
+              IMAGE_NAME="${{ github.repository_owner }}/fts3-mon"
               DOCKERFILE_PATH="docker/fts3-mon/Containerfile"
               BUILD_CONTEXT="docker/fts3-mon"
               ;;
             activemq-*)
-              IMAGE_NAME="${{ github.repository_owner }}/activemq"
+              IMAGE_NAME="${{ github.repository_owner }}/fts3-activemq"
               DOCKERFILE_PATH="docker/fts3-activemq/Containerfile"
               BUILD_CONTEXT="docker/fts3-activemq"
               ;;
@@ -54,6 +57,24 @@ jobs:
               exit 1
               ;;
           esac
+
+          PATTERN="^(server|rest|monitoring|activemq)-([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+\.[0-9]+\.[0-9]+)$"
+          
+          if [[ "$TAG" =~ $PATTERN ]]; then
+            SERVICE_NAME="${BASH_REMATCH[0]}"
+            APP_VERSION="${BASH_REMATCH[1]}"
+            IMAGE_VERSION="${BASH_REMATCH[2]}"
+            
+            # Export values to GITHUB_ENV
+            echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+            echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+            echo "IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
+            
+            echo "Extracted Service: $SERVICE_NAME, App: $APP_VERSION, Image: $IMAGE_VERSION"
+          else
+            echo "Error: Tag '$TAG' does not match the expected format."
+            exit 1
+          fi
 
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "DOCKERFILE_PATH=$DOCKERFILE_PATH" >> $GITHUB_ENV
@@ -70,6 +91,8 @@ jobs:
           context: ${{ env.BUILD_CONTEXT }}
           push: false               # set to true when you really want to push
           platforms: linux/amd64
+          build-args: |
+            IMAGE_VERSION=${{ env.IMAGE_VERSION }}
           additional-tags: |
             ${{ github.event.sha }}
             ${{ env.IMAGE_TAG }}
