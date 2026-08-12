@@ -56,8 +56,8 @@ EOF
 COPY rootfs/ /
 
 #> Create fts3 user and group
-RUN groupadd -r fts3 && \
-    useradd -r -g fts3 -d /var/log/fts3 -s /sbin/nologin \
+RUN groupadd -g 2000 fts3 && \
+    useradd -l -u 1000 -g fts3 -d /var/log/fts3 -s /sbin/nologin \
     -c "fts3 urlcopy user" fts3
 
 #> Grant group write and read access

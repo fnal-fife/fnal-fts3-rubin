@@ -28,9 +28,6 @@ echo ">> Updating fts3configs <<"
 envsubst < /opt/fts3/fts3-configs/fts3config > /etc/fts3/fts3config
 envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.conf
 
-chown -R fts3:fts3 /var/log/fts3
-chown -R fts3:fts3 /var/lib/fts3/messages
-
 if [[ ! -z "${DATABASE_UPGRADE}" ]]; then
    echo ">> Database Upgrade <<"
    yes Y | python /usr/share/fts/fts-database-upgrade.py
