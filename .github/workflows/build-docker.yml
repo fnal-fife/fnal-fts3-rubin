@@ -21,7 +21,7 @@ jobs:
       - name: Determine configuration from tag
         id: set-env
         run: |
-          TAG="${{ github.event.release.tag_name || env.TEST_TAG }}"
+          TAG="${{ github.event.release.tag_name }}"
 
           case "$TAG" in
             server-*)
