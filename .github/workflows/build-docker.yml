@@ -70,6 +70,6 @@ jobs:
           context: ${{ env.BUILD_CONTEXT }}
           push: false               # set to true when you really want to push
           platforms: linux/amd64
-          additional-tags:
-            - ${{ github.event.sha }}
-            - ${{ IMAGE_TAG }}
+          additional-tags: |
+            ${{ github.event.sha }}
+            ${{ IMAGE_TAG }}
