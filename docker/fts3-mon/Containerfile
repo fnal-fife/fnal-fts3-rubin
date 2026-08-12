@@ -23,15 +23,15 @@ ARG VERSION=3.14.2
 ARG S6_OVERLAY_VERSION=3.2.2.0
 
 LABEL fts-version=${VERSION}-s6 \
-      description="FTS3 Container" \
+      description="FTS3 Monitoring Container" \
       maintainer="Dennis Lee <dylee@fnal.gov>" \
       fts_monitoring_version="${VERSION}" \
-      fts_mysql_version="${FTS_MYSQL_VERSION}"
+      fts_mysql_version="${VERSION}"
 
 #> Add supported Alma9 repos
 ADD http://fts-repo.web.cern.ch/fts-repo/fts3-el9.repo \
     http://fts-repo.web.cern.ch/fts-repo/fts3-depend.repo \
-    almalinux-crb.repo \
+#    almalinux-crb.repo \
     /etc/yum.repos.d
 
 #> Update image
@@ -66,6 +66,9 @@ rm -rf /var/cache/dnf
 rm -f /etc/cron.d/0hourly \
   /etc/cron.hourly/0anacron \
   /tmp/django-provide-1.0-1.el9.x86_64.rpm
+
+groupmod -g 2000 fts3 2>/dev/null || true
+usermod -u 1000 -g 2000 fts3 2>/dev/null || true
 
 EOF
 
