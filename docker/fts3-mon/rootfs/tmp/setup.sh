@@ -30,8 +30,8 @@ envsubst < /opt/fts3/fts3-configs/fts-activemq.conf > /etc/fts3/fts-activemq.con
 chown root:apache /etc/fts3web/fts3web.ini
 chown -R fts3:apache /var/log/fts3web
 
- echo ">> Set FTS3 Aliases <<"
- python3 /opt/fts3/cluster-hostname-aliasing.py
+echo ">> Set FTS3 Aliases <<"
+python3 /opt/fts3/cluster-hostname-aliasing.py
 
 # Remove TLSv1.3 support from monitoring server config : See https://its.cern.ch/jira/browse/FTS-2037 for more information
 sed -i -e 's^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1^SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1 -TLSv1.3^g' /etc/httpd/conf.d/ftsmon.conf
