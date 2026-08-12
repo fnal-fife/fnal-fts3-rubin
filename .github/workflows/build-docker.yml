@@ -2,6 +2,11 @@ name: Build Docker image
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_override:
+        description: 'Tag or version override'
+        required: false
+        type: string
   release:
     types: [published]
 
@@ -16,33 +21,33 @@ jobs:
       - name: Checkout tag commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.tag_override || github.event.release.tag_name || github.ref_name }}
 
       - name: Determine configuration from tag
         id: set-env
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${{ inputs.tag_override || github.event.release.tag_name || github.ref_name }}"
 
           case "$TAG" in
             server-*)
-              IMAGE_NAME="${{ github.repository_owner }}/server"
-              DOCKERFILE_PATH="services/server/Dockerfile"
-              BUILD_CONTEXT="services/server"
+              IMAGE_NAME="${{ github.repository_owner }}/fts3-server"
+              DOCKERFILE_PATH="docker/fts3-server/Containerfile"
+              BUILD_CONTEXT="docker/fts3-server"
               ;;
             rest-v*)
               IMAGE_NAME="${{ github.repository_owner }}/rest"
-              DOCKERFILE_PATH="services/rest/Dockerfile"
-              BUILD_CONTEXT="services/rest"
+              DOCKERFILE_PATH="docker/fts3-rest/Containerfile"
+              BUILD_CONTEXT="docker/fts3-rest"
               ;;
             monitoring-*)
               IMAGE_NAME="${{ github.repository_owner }}/monitoring"
-              DOCKERFILE_PATH="services/monitoring/Dockerfile"
-              BUILD_CONTEXT="services/monitoring"
+              DOCKERFILE_PATH="docker/fts3-mon/Containerfile"
+              BUILD_CONTEXT="docker/fts3-mon"
               ;;
             activemq-*)
               IMAGE_NAME="${{ github.repository_owner }}/activemq"
-              DOCKERFILE_PATH="services/activemq/Dockerfile"
-              BUILD_CONTEXT="services/activemq"
+              DOCKERFILE_PATH="docker/fts3-activemq/Containerfile"
+              BUILD_CONTEXT="docker/fts3-activemq"
               ;;
             *)
               echo "::error::Tag '$TAG' does not match any recognized service prefix."
@@ -52,7 +57,8 @@ jobs:
 
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "DOCKERFILE_PATH=$DOCKERFILE_PATH" >> $GITHUB_ENV
-          echo "BUILD_CONTEXT=$BUILD_CONTEXT" >> $GITHUB_ENVname: Build docker images
+          echo "BUILD_CONTEXT=$BUILD_CONTEXT" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
 
       - name: Build (and optionally push) image
         uses: lsst-sqre/build-and-push-to-ghcr@v1
@@ -64,4 +70,6 @@ jobs:
           context: ${{ env.BUILD_CONTEXT }}
           push: false               # set to true when you really want to push
           platforms: linux/amd64
-          additional-tags: ${{ github.event.sha }}
+          additional-tags:
+            - ${{ github.event.sha }}
+            - ${{ IMAGE_TAG }}
