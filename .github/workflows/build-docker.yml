@@ -89,7 +89,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dockerfile: ${{ env.DOCKERFILE_PATH }}
           context: ${{ env.BUILD_CONTEXT }}
-          push: false               # set to true when you really want to push
+          push: true               # set to true when you really want to push
           platforms: linux/amd64
           build-args: |
             IMAGE_VERSION=${{ env.IMAGE_VERSION }}
