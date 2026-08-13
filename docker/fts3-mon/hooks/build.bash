@@ -1,9 +1,10 @@
 #!/bin/bash
 
-FTS_VERSION=3.14.2
+FTS_VERSION=3.14.3
+IMAGE_VERSION=0.2.0
 
 podman build --platform linux/amd64 \
-  --build-arg VERSION=$FTS_VERSION \
-  -t ${1:-localbuild/fts3-mon:latest-s6} \
-  -t ghcr.io/fnal-fife/fts3-mon:$FTS_VERSION-s6 \
+  --build-arg FTS_VERSION=$FTS_VERSION \
+  --build-arg IMAGE_VERSION=$IMAGE_VERSION \
+  -t ghcr.io/fnal-fife/fts3-mon:$FTS_VERSION-$IMAGE_VERSION \
   -f Containerfile .
