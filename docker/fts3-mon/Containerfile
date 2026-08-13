@@ -41,6 +41,8 @@ dnf install -y \
 dnf clean all
 rm -rf /var/cache/dnf
 
+mkdir -p /etc/fts3
+
 #> Clear up cronie anacron job
 rm -f /etc/cron.d/0hourly \
   /etc/cron.hourly/0anacron
